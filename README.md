@@ -1,6 +1,6 @@
 # retrofit
 Cognitive Builder Faire Project Analyzing Weight, Steps, and Tone Using IBM Watson. 
-By Wen Yang, Yune Leou-On, Ammar Darkanzali, Patrick Park, and Sarang Ragrakecha.
+By Wen Yang, Yune Leou-On, Ammar Darkanzali, Patrick Park, and Sarang Rakhecha.
 Special thanks to Polong Lin and Alex Aklson.
 
 ## R App Weight Prediction
