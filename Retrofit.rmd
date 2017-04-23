@@ -1,0 +1,225 @@
+---
+title: "Weight Prediction by Prophet "
+author: "Team Retrofit"
+date: "April 20, 2017"
+output: 
+  html_document: 
+    number_sections: yes
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+library(prophet)
+library(ggplot2)
+library(MASS) 
+library(dplyr)
+library(gridExtra)
+```
+
+# Step1: import data
+
+```{r}
+# Import Data
+dta <- read.csv('/Users/portkeys/Documents//CognitiveBuilderFaire/Retrofit/sample_client_data/Weight.csv') 
+#head(dta)
+```
+
+```{r}
+# Convert factor format to date formate for "day"
+date <- as.Date(dta$day, format="%Y-%m-%d")
+# Assign value to weight
+weight<-dta$value
+data<-data.frame(date,weight)
+
+```
+
+```{r}
+# creat training and test dataset
+trainset<-subset(data, date>="2012-07-12" & date<="2016-04-17")
+testset <-subset(data,date>="2016-04-18" & date<="2017-04-17")
+```
+
+```{r}
+##--------Prophet training process-------------------##
+ds<-trainset$date
+y <- trainset$weight
+df <-data.frame(ds,y)
+```
+
+```{r}
+m <- prophet(df,changepoint.prior.scale = 0.001)
+```
+
+```{r}
+# check some prophet components
+# m$growth
+# m$changepoints
+# m$n.changepoints
+```
+
+
+```{r}
+# Future objects
+future <- make_future_dataframe(m, periods=365)
+
+
+forecast<- predict(m,future)
+```
+
+```{r}
+# forcast plot weekly, yearly
+prophet_plot_components(m,forecast)
+```
+
+```{r}
+# forecast plot
+plot(m,forecast)
+```
+
+
+```{r}
+fcst<-forecast[c('ds','yhat','yhat_lower','yhat_upper')]
+#head(fcst)
+
+m<-ggplot(data=data,aes(x=date,y=weight))+geom_point(colour="lightblue")
+m+geom_line(data=fcst,aes(x=ds,y=yhat))
+
+```
+
+
+
+```{r}
+fcst_test<-subset(fcst,ds>="2016-04-18" & ds<="2017-04-17")
+g1 <- ggplot(fcst_test, aes(ds, yhat)) + 
+  geom_line(na.rm=TRUE, color="darkgrey") +
+  ggtitle("Weight Predicted by Prophet from 2016 to 2017") +
+  xlab("Date") +
+  ylab("Weight, lbs")
+```
+
+```{r}
+g2<- ggplot(testset, aes(date,weight))+
+  geom_point(na.rm=TRUE, color="lightblue",size=2,pch=18) +
+  ggtitle("Actual Weight from 2016 to 2017") +
+  xlab("Date") +
+  ylab("Weight, lbs")
+
+grid.arrange(g1, g2, ncol=1)
+```
+
+# Add Holidays
+
+```{r}
+holiday <- data_frame(
+  holiday = 'holidayseason',
+  ds = as.Date(c(
+                 '2013-11-24', '2013-12-25', '2014-11-24',
+                 '2014-12-25', '2015-11-24', '2015-12-25',
+                 '2016-11-24', '2016-12-25')),
+  lower_window = 0,
+  upper_window = 1
+)
+
+superbowls <- data_frame(
+  holiday = 'superbowl',
+  ds = as.Date(c('2014-02-02', '2016-02-07')),
+  lower_window = 0,
+  upper_window = 1
+)
+holidays <- bind_rows(holiday,superbowls)
+```
+
+
+```{r}
+m <- prophet(df, holidays = holidays)
+forecast <- predict(m, future)
+```
+
+
+
+```{r}
+prophet_plot_components(m, forecast)
+```
+
+# Test Parameter "changepoint.prior.scale"
+```{r}
+# Changepoint test
+
+m <- prophet(df, changepoint.prior.scale = 0.5)
+forecast <- predict(m, future)
+plot(m, forecast);
+```
+
+```{r}
+m <- prophet(df, changepoint.prior.scale = 0.001)
+forecast <- predict(m, future)
+plot(m, forecast);
+```
+
+```{r}
+em_dat <- read.csv('/Users/portkeys/Documents/CognitiveBuilderFaire/Retrofit/sample_client_data/ExtractDataPerDay.csv')
+ds <- as.Date(em_dat$MeasurementDate,format="%m/%d/%Y")      
+
+joy<-em_dat$MaxOfJoy
+sad<-em_dat$MaxOfSadness
+anger<-em_dat$MaxOfAnger
+
+emotion<-data.frame(ds,joy,sad,anger)
+head(emotion)
+```
+
+```{r}
+# predict joy
+y<-joy
+df<-data.frame(ds,y)
+
+m <- prophet(df, growth="linear", n.changepoints=50, 
+             changepoint.prior.scale = 0.001, uncertainty.samples = 2000)
+
+future <- make_future_dataframe(m, periods=365)
+
+forecast<- predict(m,future)
+
+plot(m,forecast)
+```
+
+```{r}
+prophet_plot_components(m, forecast)
+```
+
+
+
+```{r}
+m<-ggplot(data=data,aes(x=date,y=weight))+geom_point(colour="lightblue")
+g1<-m+geom_line(data=fcst,aes(x=ds,y=yhat))
+
+g2<-ggplot(data=emotion,aes(x=ds,y=joy))+geom_line()
+g3<-ggplot(data=emotion,aes(x=ds,y=sad))+geom_line()
+
+grid.arrange(g1,g2,g3,ncol=1)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
