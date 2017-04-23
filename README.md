@@ -7,7 +7,7 @@ Special thanks to Polong Lin and Alex Aklson.
 ![R App](/r_app.png?raw=true "R App")
 
 ## Correlation Heatmap
-![Correlation Heatmap](/heatmap.png?raw=true "Correlation Heatmap")
+![Correlation_Heatmap](/joy_steps_correlation.png?raw=true "Correlation Heatmap")
 
 1. A wellness company would like to analyze the longitudinal data for each user who are interested in their weight management.
 
